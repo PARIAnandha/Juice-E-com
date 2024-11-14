@@ -15,7 +15,7 @@ import {
   Menu as MenuIcon,
   WhatsApp,
 } from "@mui/icons-material";
-import Sidebar from "../Home/Sidebar/indext";
+import Sidebar from "../Sidebar/indext";
 
 const Contact = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

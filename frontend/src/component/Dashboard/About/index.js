@@ -8,7 +8,7 @@ import {
   Public,
   Menu as MenuIcon,
 } from "@mui/icons-material";
-import Sidebar from "../Home/Sidebar/indext";
+import Sidebar from "../Sidebar/indext";
 
 const About = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

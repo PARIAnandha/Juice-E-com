@@ -25,7 +25,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ShoppingCart from "@mui/icons-material/ShoppingCart";
 import MenuIcon from "@mui/icons-material/Menu";
 import ProductRegister from "../Admin/ProductRegister/indext";
-import Sidebar from "../Dashboard/Home/Sidebar/indext";
+import Sidebar from "../Dashboard/Sidebar/indext";
 
 const ProductData = () => {
   const [products, setProducts] = useState([]);

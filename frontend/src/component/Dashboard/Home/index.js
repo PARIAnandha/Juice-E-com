@@ -22,8 +22,7 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import Sidebar from "../Home/Sidebar/indext";
+import Sidebar from "../Sidebar/indext";
 import About from "../About";
 import Contact from "../Contact";
 
@@ -33,6 +32,9 @@ const Home = () => {
   const [cartItems, setCartItems] = useState([]);
   const [openCartModal, setOpenCartModal] = useState(false);
   const [openSuccess, setOpenSuccess] = useState(false);
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [openOrderConfirm, setOpenOrderConfirm] = useState(false);
 
   useEffect(() => {
     axios
@@ -90,17 +92,50 @@ const Home = () => {
     );
   };
 
-  const handleRemoveItem = (itemToRemove) => {
-    setCartItems((prevItems) =>
-      prevItems.filter((item) => item._id !== itemToRemove._id),
-    );
+  const handleRemoveItem = (item) => {
+    setItemToDelete(item);
+    setOpenDeleteConfirm(true);
   };
 
-  const handleOrderConfirm = () => {
-    // Assuming we send the order to the backend or proceed with the order
-    setCartItems([]);
-    setOpenSuccess(true);
-    handleCloseCartModal();
+  const confirmDeleteItem = () => {
+    setCartItems((prevItems) =>
+      prevItems.filter((item) => item._id !== itemToDelete._id),
+    );
+    setOpenDeleteConfirm(false);
+  };
+
+  const cancelDeleteItem = () => {
+    setOpenDeleteConfirm(false);
+  };
+
+  const handleOrderConfirm = async () => {
+    setOpenOrderConfirm(true); // Show the order confirmation popup
+  };
+
+  const confirmOrder = async () => {
+    try {
+      await axios.post("http://localhost:5000/api/orders", {
+        items: cartItems.map((item) => ({
+          productId: item._id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        totalAmount: totalProductAmount,
+        totalItems: totalProductCount,
+      });
+
+      setCartItems([]); // Clear the cart
+      setOpenSuccess(true);
+      setOpenOrderConfirm(false); // Close the confirmation modal
+      handleCloseCartModal();
+    } catch (error) {
+      console.error("Error confirming order:", error);
+    }
+  };
+
+  const cancelOrder = () => {
+    setOpenOrderConfirm(false); // Close the order confirmation modal
   };
 
   const totalProductCount = cartItems.reduce(
@@ -252,52 +287,80 @@ const Home = () => {
                           sx={{ borderRadius: "5px" }}
                         />
                       </Grid>
-                      <Grid item xs={4}>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                          {item.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          ${item.price.toFixed(2)}
-                        </Typography>
-                        <Typography variant="body1" sx={{ mx: 2 }}>
-                          {item.quantity}*{item.price.toFixed(2)}
-                        </Typography>
-                        <Typography variant="body1" sx={{ mx: 2 }}>
-                          Total Amout : {item.quantity * item.price}
-                        </Typography>
-                      </Grid>
                       <Grid
                         item
                         xs={4}
-                        container
-                        alignItems="center"
-                        justifyContent="center"
+                        sx={{ display: "flex", flexDirection: "column" }}
                       >
-                        <IconButton
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 700, color: "#333" }}
+                        >
+                          {item.name}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "#888", fontSize: "0.875rem" }}
+                        >
+                          ${item.price.toFixed(2)}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={2}>
+                        <Button
+                          size="small"
                           onClick={() =>
-                            handleQuantityChange(
-                              item,
-                              Math.max(item.quantity - 1, 1),
-                            )
+                            handleQuantityChange(item, item.quantity - 1)
                           }
-                          disabled={item.quantity <= 1}
+                          disabled={item.quantity === 1}
+                          sx={{
+                            minWidth: 0,
+                            padding: 0,
+                            fontSize: "1rem",
+                            color: "#ff6f61",
+                          }}
                         >
                           -
-                        </IconButton>
-                        <Typography variant="body1" sx={{ mx: 2 }}>
+                        </Button>
+                        <Typography
+                          variant="body2"
+                          component="span"
+                          sx={{ mx: 1 }}
+                        >
                           {item.quantity}
                         </Typography>
-                        <IconButton
+                        <Button
+                          size="small"
                           onClick={() =>
                             handleQuantityChange(item, item.quantity + 1)
                           }
+                          sx={{
+                            minWidth: 0,
+                            padding: 0,
+                            fontSize: "1rem",
+                            color: "#ff6f61",
+                          }}
                         >
                           +
-                        </IconButton>
+                        </Button>
                       </Grid>
-                      <Grid item xs={2} container justifyContent="flex-end">
-                        <IconButton onClick={() => handleRemoveItem(item)}>
-                          <DeleteIcon color="error" />
+                      <Grid item xs={2}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontSize: "1rem" }}
+                        >
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={1}>
+                        <IconButton
+                          edge="end"
+                          onClick={() => handleRemoveItem(item)}
+                          sx={{
+                            color: "#ff6f61",
+                          }}
+                        >
+                          <DeleteIcon />
                         </IconButton>
                       </Grid>
                     </Grid>
@@ -305,51 +368,79 @@ const Home = () => {
                 ))}
               </List>
             )}
+            {cartItems.length > 0 && (
+              <Box mt={2}>
+                <Typography variant="body1">
+                  Total Items: {totalProductCount}
+                </Typography>
+                <Typography variant="h6">
+                  Total Amount: ${totalProductAmount.toFixed(2)}
+                </Typography>
+              </Box>
+            )}
           </DialogContent>
-          <DialogActions sx={{ justifyContent: "space-between", padding: 2 }}>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Total Count: {totalProductCount}
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Total Amount: ${totalProductAmount.toFixed(2)}
-              </Typography>
-            </Box>
+          <DialogActions>
+            <Button onClick={handleCloseCartModal} color="secondary">
+              Close
+            </Button>
             <Button
               onClick={handleOrderConfirm}
-              startIcon={<CheckCircleOutlineIcon />}
-              sx={{
-                backgroundColor: "#ff6f61",
-                color: "#fff",
-                "&:hover": {
-                  backgroundColor: "#ff5a47",
-                },
-              }}
+              color="primary"
+              variant="contained"
+              disabled={cartItems.length === 0}
             >
-              Confirm Order
+              Place Order
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Success Message */}
+        {/* Delete Confirmation Modal */}
+        <Dialog open={openDeleteConfirm} onClose={cancelDeleteItem}>
+          <DialogTitle>Confirm Delete</DialogTitle>
+          <DialogContent>
+            <Typography>Are you sure you want to remove this item?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={cancelDeleteItem} color="secondary">
+              Cancel
+            </Button>
+            <Button onClick={confirmDeleteItem} color="primary">
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Order Confirmation Modal */}
+        <Dialog open={openOrderConfirm} onClose={cancelOrder}>
+          <DialogTitle>Confirm Order</DialogTitle>
+          <DialogContent>
+            <Typography>Are you sure you want to place the order?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={cancelOrder} color="secondary">
+              Cancel
+            </Button>
+            <Button onClick={confirmOrder} color="primary">
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Success Snackbar */}
         <Snackbar
           open={openSuccess}
           autoHideDuration={3000}
           onClose={handleCloseSuccess}
         >
-          <Alert
-            onClose={handleCloseSuccess}
-            severity="success"
-            sx={{ width: "100%" }}
-          >
-            Order confirmed successfully!
+          <Alert onClose={handleCloseSuccess} severity="success">
+            Order placed successfully!
           </Alert>
         </Snackbar>
-
-        {/* Other Components */}
-        <About />
-        <Contact />
       </Box>
+
+      {/* Additional Sections */}
+      <About />
+      <Contact />
     </div>
   );
 };

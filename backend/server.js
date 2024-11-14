@@ -4,6 +4,7 @@ const cors = require('cors');
 const DBconnect = require('./DataConnect/DBconnect');
 const loginRoutes = require("./Routes/loginRoutes");
 const productRoutes = require('./Routes/productRoutes');
+const orderRoutes = require("./Routes/productorderRoutes");
 
 
 const app = express();
@@ -14,10 +15,11 @@ app.use(cors({
     origin: "http://localhost:3000"
 })); 
 
-const PORT = process.env.PORT || 30;
+const PORT = process.env.PORT || 6000;
 
 app.use("/api/auth", loginRoutes);
 app.use('/api/admin', productRoutes);
+app.use("/api/orders", orderRoutes);
 
 DBconnect();
 
